@@ -86,6 +86,9 @@ All todo endpoints are prefixed with `/api/v1`
 
 #### Get All Todos
 - **GET** `/api/v1/todos`
+- **Query Parameters**:
+  - `page` (optional): Page number, defaults to `1`
+  - `limit` (optional): Number of items per page, defaults to `10`, max `100`
 - **Response**: `200 OK`
   ```json
   {
@@ -98,7 +101,13 @@ All todo endpoints are prefixed with `/api/v1`
         "created_at": "2023-01-01T12:00:00Z",
         "updated_at": "2023-01-01T12:00:00Z"
       }
-    ]
+    ],
+    "total_count": 15,
+    "current_page": 1,
+    "total_pages": 2,
+    "per_page": 10,
+    "has_next": true,
+    "has_prev": false
   }
   ```
 
@@ -172,29 +181,38 @@ All todo endpoints are prefixed with `/api/v1`
      -d '{"title":"Learn Go","description":"Complete Go tutorial","completed":false}'
    ```
 
-2. **Get all todos**:
+2. **Get all todos (default pagination)**:
    ```bash
    curl http://localhost:8080/api/v1/todos
    ```
 
-3. **Get a specific todo**:
+3. **Get todos with custom pagination**:
+   ```bash
+   # Get page 2 with 5 items per page
+   curl "http://localhost:8080/api/v1/todos?page=2&limit=5"
+   
+   # Get first 20 items
+   curl "http://localhost:8080/api/v1/todos?limit=20"
+   ```
+
+4. **Get a specific todo**:
    ```bash
    curl http://localhost:8080/api/v1/todos/1
    ```
 
-4. **Update a todo**:
+5. **Update a todo**:
    ```bash
    curl -X PUT http://localhost:8080/api/v1/todos/1 \
      -H "Content-Type: application/json" \
      -d '{"title":"Learn Go - Updated","description":"Complete Go tutorial and build an app","completed":true}'
    ```
 
-5. **Delete a todo**:
+6. **Delete a todo**:
    ```bash
    curl -X DELETE http://localhost:8080/api/v1/todos/1
    ```
 
-6. **Health check**:
+7. **Health check**:
    ```bash
    curl http://localhost:8080/health
    ```
