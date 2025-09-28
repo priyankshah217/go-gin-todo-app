@@ -46,12 +46,71 @@ func CreateTodo(c *gin.Context) {
 	c.JSON(http.StatusCreated, newTodo)
 }
 
-// GetTodos returns all todos
+// GetTodos returns todos with pagination support
 func GetTodos(c *gin.Context) {
 	todoMu.RLock()
 	defer todoMu.RUnlock()
 
-	c.JSON(http.StatusOK, gin.H{"todos": todos})
+	// Parse pagination parameters
+	page := 1
+	limit := 10
+
+	if pageParam := c.Query("page"); pageParam != "" {
+		if p, err := strconv.Atoi(pageParam); err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	if limitParam := c.Query("limit"); limitParam != "" {
+		if l, err := strconv.Atoi(limitParam); err == nil && l > 0 {
+			if l <= 100 {
+				limit = l
+			} else {
+				limit = 100 // Cap at maximum
+			}
+		}
+	}
+
+	// Calculate pagination
+	totalCount := len(todos)
+	totalPages := (totalCount + limit - 1) / limit
+	if totalPages == 0 {
+		totalPages = 1
+	}
+
+	// Calculate offset
+	offset := (page - 1) * limit
+	if offset >= totalCount {
+		// Page is beyond available data
+		c.JSON(http.StatusOK, gin.H{
+			"todos":        []Todo{},
+			"total_count":  totalCount,
+			"current_page": page,
+			"total_pages":  totalPages,
+			"per_page":     limit,
+			"has_next":     false,
+			"has_prev":     page > 1,
+		})
+		return
+	}
+
+	// Get the slice for this page
+	end := offset + limit
+	if end > totalCount {
+		end = totalCount
+	}
+
+	paginatedTodos := todos[offset:end]
+
+	c.JSON(http.StatusOK, gin.H{
+		"todos":        paginatedTodos,
+		"total_count":  totalCount,
+		"current_page": page,
+		"total_pages":  totalPages,
+		"per_page":     limit,
+		"has_next":     page < totalPages,
+		"has_prev":     page > 1,
+	})
 }
 
 // GetTodo returns a specific todo by ID
